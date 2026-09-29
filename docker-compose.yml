@@ -1,0 +1,81 @@
+# Levanta la API + una base de datos local.
+#   MySQL (por defecto):  docker compose up --build
+#   PostgreSQL:           docker compose --profile postgres up --build app-pg postgres
+# Swagger: http://localhost:8080/swagger-ui/index.html
+# Variables de correo/JWT: copie .env.example a .env y complete sus valores.
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-1234567}
+      MYSQL_DATABASE: crud_usuarios
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD:-1234567}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DB_ENGINE: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: crud_usuarios
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-1234567}
+      SMTP_USERNAME: ${SMTP_USERNAME:-tu_correo@gmail.com}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-tu_app_password_aqui}
+      JWT_SECRET: ${JWT_SECRET:-ZGV2ZWxvcG1lbnQtb25seS1qd3Qtc2VjcmV0LW11c3QtYmUtcmVwbGFjZWQ=}
+
+  postgres:
+    image: postgres:16
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-1234567}
+      POSTGRES_DB: crud_usuarios
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./src/main/resources/schema-postgresql.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d crud_usuarios"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app-pg:
+    build: .
+    profiles: ["postgres"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DB_ENGINE: postgresql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: crud_usuarios
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-1234567}
+      DB_SSL_MODE: disable
+      SMTP_USERNAME: ${SMTP_USERNAME:-tu_correo@gmail.com}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-tu_app_password_aqui}
+      JWT_SECRET: ${JWT_SECRET:-ZGV2ZWxvcG1lbnQtb25seS1qd3Qtc2VjcmV0LW11c3QtYmUtcmVwbGFjZWQ=}
+
+volumes:
+  mysql-data:
+  pg-data:

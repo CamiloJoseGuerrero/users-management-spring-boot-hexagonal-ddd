@@ -1,0 +1,30 @@
+# Blueprint de Render: New > Blueprint > seleccionar este repositorio.
+# Los valores con "sync: false" se piden en el panel de Render (no se guardan en Git).
+services:
+  - type: web
+    name: users-management
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /swagger-ui/index.html
+    envVars:
+      - key: DB_ENGINE
+        value: postgresql
+      - key: DB_SSL_MODE
+        value: require
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_NAME
+        value: postgres
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true

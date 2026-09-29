@@ -26,11 +26,15 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Adaptador de persistencia para PostgreSQL (local o Supabase). Implementa los mismos puertos de
+ * salida que {@link UserRepositoryMySQL}; se activa con {@code db.engine=postgresql}.
+ */
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "db.engine", havingValue = "mysql", matchIfMissing = true)
-public class UserRepositoryMySQL
+@ConditionalOnProperty(name = "db.engine", havingValue = "postgresql")
+public class UserRepositoryPostgreSQL
     implements SaveUserPort,
         UpdateUserPort,
         GetUserByIdPort,
@@ -41,10 +45,10 @@ public class UserRepositoryMySQL
   private static final String SQL_INSERT =
       "INSERT INTO users "
       + "(id, name, email, password, role, status, created_at, updated_at) "
-      + "VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())";
+      + "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
   private static final String SQL_UPDATE =
-      "UPDATE users SET name = ?, email = ?, password = ?, role = ?, status = ?, updated_at = NOW() "
+      "UPDATE users SET name = ?, email = ?, password = ?, role = ?, status = ?, updated_at = CURRENT_TIMESTAMP "
       + "WHERE id = ?";
 
   private static final String SQL_SELECT_BY_ID =
